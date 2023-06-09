@@ -22,7 +22,9 @@ Inject the service in your controller :
 Use the service :
 
 ``` php
-    $response = $this->idLoomApiService->request('GET','/attendees');
+    $this->idLoomApiService->setKey('abcdefdfhijklmnopqrstuvwxyz');
+    $options = [ 'event_uid' => '1234567890'];
+    $response = $this->idLoomApiService->request('GET','/attendees',$options);
 ```
 
 It's not possible to put api key in .env file because you can have different keys for different events.
