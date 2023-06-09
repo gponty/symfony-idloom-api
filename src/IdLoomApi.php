@@ -3,6 +3,9 @@
 namespace Gponty\IdLoomBundle;
 
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -16,132 +19,77 @@ class IdLoomApi
         $this->client = HttpClient::create();
     }
 
-    public function setApiKey($apiKey): void
+    public function setApiKey(string $apiKey): void
     {
         $this->apiKey = $apiKey;
     }
 
-    public function getAttendees($eventUid, $dateFrom = null)
+    public function getAllAttendees(array $options = []): array
     {
-        $query = [];
-        $query['event_uid'] = $eventUid;
-        if (null !== $dateFrom) {
-            $query['date_from'] = $dateFrom;
-        }
-
-        $page = 1;
+        $options['page'] = 1;
         $attendeeAvailable = true;
 
         $data = [];
-        $retour = [];
-        try {
-            while ($attendeeAvailable) {
-                $query['page'] = $page++;
 
-                $response = $this->client->request('GET', $this->idLoomUrl.'attendees', [
-                    'headers' => [
-                        'Authorization' => 'Bearer '.$this->apiKey,
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                    ],
-                    'query' => $query,
-                ]);
+        while ($attendeeAvailable) {
+            $retour = $this->request('GET', '/attendees', $options);
 
-                if ($response->getStatusCode() >= 300) {
-                    $retour['success'] = false;
-                    $retour['message'] = $response->getContent(false);
-                    $retour['data'] = [];
-                    $attendeeAvailable = false;
-                } else {
-                    $retour['success'] = true;
-                    $attendees = json_decode($response->getContent(false), true)['data'];
-                    $data = array_merge($data, $attendees);
-                    if (0 === count($attendees)) {
-                        $attendeeAvailable = false;
-                    }
-                }
-            }
             if ($retour['success']) {
-                $retour['success'] = true;
-                $retour['message'] = '';
-                $retour['data'] = $data;
+                $attendees = $retour['data'];
+                $data = \array_merge($data, $attendees);
+                if (0 === \count($attendees)) {
+                    $attendeeAvailable = false;
+                }
+            } else {
+                return $retour;
             }
-        } catch (TransportExceptionInterface $e) {
-            $retour['success'] = false;
-            $retour['message'] = $e->getMessage();
+            ++$options['page'];
         }
 
-        return $retour;
+        return ['success' => true, 'data' => $data];
     }
 
-    public function getInvoices($eventUid, $last): array
+    public function getAllInvoices(array $options = []): array
     {
-        $query = [];
-        $query['event_uid'] = $eventUid;
-        if (null !== $last) {
-            $query['last'] = $last;
-        }
-
-        $page = 1;
+        $options['page'] = 1;
         $invoiceAvailable = true;
 
         $data = [];
-        $retour = [];
-        try {
-            while ($invoiceAvailable) {
-                $query['page'] = $page++;
 
-                $response = $this->client->request('GET', $this->idLoomUrl.'invoices', [
-                    'headers' => [
-                        'Authorization' => 'Bearer '.$this->apiKey,
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                    ],
-                    'query' => $query,
-                ]);
-
-                if ($response->getStatusCode() >= 300) {
-                    $retour['success'] = false;
-                    $retour['message'] = $response->getContent(false);
-                    $retour['data'] = [];
-                    $invoiceAvailable = false;
-                } else {
-                    $retour['success'] = true;
-                    $invoices = json_decode($response->getContent(false), true)['data'];
-                    $data = array_merge($data, $invoices);
-                    if (0 === count($invoices)) {
-                        $invoiceAvailable = false;
-                    }
-                }
-            }
+        while ($invoiceAvailable) {
+            $retour = $this->request('GET', '/invoices', $options);
 
             if ($retour['success']) {
-                $retour['success'] = true;
-                $retour['message'] = '';
-                $retour['data'] = $data;
+                $invoices = $retour['data'];
+                $data = \array_merge($data, $invoices);
+                if (0 === \count($invoices)) {
+                    $invoiceAvailable = false;
+                }
+            } else {
+                return $retour;
             }
-        } catch (TransportExceptionInterface $e) {
-            $retour['success'] = false;
-            $retour['message'] = $e->getMessage();
+            ++$options['page'];
         }
 
-        return $retour;
+        return ['success' => true, 'data' => $data];
     }
 
-    public function getAttendee($attendeeUid): array
+    /**
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     */
+    public function request(string $method, string $endpoint, array $options = []): array
     {
-        $query = [];
-        $query['guest_uid'] = $attendeeUid;
-
         $retour = [];
         try {
-            $response = $this->client->request('GET', $this->idLoomUrl.'attendees', [
+            $response = $this->client->request($method, $this->idLoomUrl.$endpoint, [
                 'headers' => [
                     'Authorization' => 'Bearer '.$this->apiKey,
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ],
-                'query' => $query,
+                'query' => $options,
             ]);
 
             if ($response->getStatusCode() >= 300) {
@@ -152,81 +100,13 @@ class IdLoomApi
                 $retour['success'] = true;
                 $retour['message'] = '';
 
-                $data = json_decode($response->getContent(false), true);
-
-                $retour['data'] = $data['data'];
-            }
-        } catch (TransportExceptionInterface $e) {
-            $retour['success'] = false;
-            $retour['message'] = $e->getMessage();
-        }
-
-        return $retour;
-    }
-
-    public function getOptions($eventUid)
-    {
-        $query = [];
-        $query['event_uid'] = $eventUid;
-
-        $retour = [];
-        try {
-            $response = $this->client->request('GET', $this->idLoomUrl.'events/options', [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$this->apiKey,
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ],
-                'query' => $query,
-            ]);
-
-            if ($response->getStatusCode() >= 300) {
-                $retour['success'] = false;
-                $retour['message'] = $response->getContent(false);
-                $retour['data'] = [];
-            } else {
-                $retour['success'] = true;
-                $retour['message'] = '';
-
-                $data = json_decode($response->getContent(false), true);
-
-                $retour['data'] = $data['data'];
-            }
-        } catch (TransportExceptionInterface $e) {
-            $retour['success'] = false;
-            $retour['message'] = $e->getMessage();
-        }
-
-        return $retour;
-    }
-
-    public function getCategories($eventUid)
-    {
-        $query = [];
-        $query['event_uid'] = $eventUid;
-
-        $retour = [];
-        try {
-            $response = $this->client->request('GET', $this->idLoomUrl.'events/categories', [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$this->apiKey,
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ],
-                'query' => $query,
-            ]);
-
-            if ($response->getStatusCode() >= 300) {
-                $retour['success'] = false;
-                $retour['message'] = $response->getContent(false);
-                $retour['data'] = [];
-            } else {
-                $retour['success'] = true;
-                $retour['message'] = '';
-
-                $data = json_decode($response->getContent(false), true);
-
-                $retour['data'] = $data['data'];
+                $data = \json_decode($response->getContent(false), true);
+                if (!\is_array($data)) {
+                    $retour['success'] = false;
+                    $retour['message'] = 'Error decoding JSON response';
+                } else {
+                    $retour['data'] = $data['data'];
+                }
             }
         } catch (TransportExceptionInterface $e) {
             $retour['success'] = false;
