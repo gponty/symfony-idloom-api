@@ -24,6 +24,48 @@ class IdLoomApi
         $this->apiKey = $apiKey;
     }
 
+    /**
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     */
+    public function request(string $method, string $endpoint, array $options = []): array
+    {
+        $retour = [];
+        try {
+            $response = $this->client->request($method, $this->idLoomUrl.$endpoint, [
+                'headers' => [
+                    'Authorization' => 'Bearer '.$this->apiKey,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'query' => $options,
+            ]);
+
+            if ($response->getStatusCode() >= 300) {
+                $retour['success'] = false;
+                $retour['message'] = $response->getContent(false);
+                $retour['data'] = [];
+            } else {
+                $retour['success'] = true;
+                $retour['message'] = '';
+
+                $data = \json_decode($response->getContent(false), true);
+                if (!\is_array($data)) {
+                    $retour['success'] = false;
+                    $retour['message'] = 'Error decoding JSON response';
+                } else {
+                    $retour['data'] = $data['data'];
+                }
+            }
+        } catch (TransportExceptionInterface $e) {
+            $retour['success'] = false;
+            $retour['message'] = $e->getMessage();
+        }
+
+        return $retour;
+    }
+
     public function getAllAttendees(array $options = []): array
     {
         $options['page'] = 1;
@@ -72,47 +114,5 @@ class IdLoomApi
         }
 
         return ['success' => true, 'data' => $data];
-    }
-
-    /**
-     * @throws ClientExceptionInterface
-     * @throws RedirectionExceptionInterface
-     * @throws ServerExceptionInterface
-     */
-    public function request(string $method, string $endpoint, array $options = []): array
-    {
-        $retour = [];
-        try {
-            $response = $this->client->request($method, $this->idLoomUrl.$endpoint, [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$this->apiKey,
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ],
-                'query' => $options,
-            ]);
-
-            if ($response->getStatusCode() >= 300) {
-                $retour['success'] = false;
-                $retour['message'] = $response->getContent(false);
-                $retour['data'] = [];
-            } else {
-                $retour['success'] = true;
-                $retour['message'] = '';
-
-                $data = \json_decode($response->getContent(false), true);
-                if (!\is_array($data)) {
-                    $retour['success'] = false;
-                    $retour['message'] = 'Error decoding JSON response';
-                } else {
-                    $retour['data'] = $data['data'];
-                }
-            }
-        } catch (TransportExceptionInterface $e) {
-            $retour['success'] = false;
-            $retour['message'] = $e->getMessage();
-        }
-
-        return $retour;
     }
 }
