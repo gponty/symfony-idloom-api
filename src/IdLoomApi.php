@@ -115,4 +115,29 @@ class IdLoomApi
 
         return ['success' => true, 'data' => $data];
     }
+
+    public function getAllCreditNotes(array $options = []): array
+    {
+        $options['page'] = 1;
+        $creditNotesAvailable = true;
+
+        $data = [];
+
+        while ($creditNotesAvailable) {
+            $retour = $this->request('GET', '/credit-notes', $options);
+
+            if ($retour['success']) {
+                $creditNotes = $retour['data'];
+                $data = \array_merge($data, $creditNotes);
+                if (0 === \count($creditNotes)) {
+                    $creditNotesAvailable = false;
+                }
+            } else {
+                return $retour;
+            }
+            ++$options['page'];
+        }
+
+        return ['success' => true, 'data' => $data];
+    }
 }
