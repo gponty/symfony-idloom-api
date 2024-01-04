@@ -68,8 +68,10 @@ class IdLoomApi
 
     public function getAllAttendees(array $options = []): array
     {
-        $options['page'] = 1;
         $attendeeAvailable = true;
+        if (!isset($options['page'])) {
+            $options['page'] = 1;
+        }
 
         $data = [];
 
@@ -82,6 +84,7 @@ class IdLoomApi
                 if (0 === \count($attendees)) {
                     $attendeeAvailable = false;
                 }
+                \sleep(1);
             } else {
                 return $retour;
             }
@@ -93,8 +96,10 @@ class IdLoomApi
 
     public function getAllInvoices(array $options = []): array
     {
-        $options['page'] = 1;
         $invoiceAvailable = true;
+        if (!isset($options['page'])) {
+            $options['page'] = 1;
+        }
 
         $data = [];
 
@@ -107,6 +112,7 @@ class IdLoomApi
                 if (0 === \count($invoices)) {
                     $invoiceAvailable = false;
                 }
+                \sleep(1);
             } else {
                 return $retour;
             }
@@ -118,8 +124,10 @@ class IdLoomApi
 
     public function getAllCreditNotes(array $options = []): array
     {
-        $options['page'] = 1;
         $creditNotesAvailable = true;
+        if (!isset($options['page'])) {
+            $options['page'] = 1;
+        }
 
         $data = [];
 
@@ -132,6 +140,7 @@ class IdLoomApi
                 if (0 === \count($creditNotes)) {
                     $creditNotesAvailable = false;
                 }
+                \sleep(1);
             } else {
                 return $retour;
             }
