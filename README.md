@@ -1,6 +1,6 @@
 # Symfony IdLoom Api
 
-This is a Symfony 6 Bundle helps you to use idloom API v4 : https://idloom.events/docs/.
+This is a Symfony 6/7 Bundle helps you to use idloom API v4 : https://idloom.events/docs/.
 
 ## Installation
 
