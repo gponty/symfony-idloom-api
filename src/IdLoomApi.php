@@ -33,9 +33,9 @@ class IdLoomApi
     {
         $retour = [];
         try {
-            $response = $this->client->request($method, $this->idLoomUrl.$endpoint, [
+            $response = $this->client->request($method, $this->idLoomUrl . $endpoint, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$this->apiKey,
+                    'Authorization' => 'Bearer ' . $this->apiKey,
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ],
@@ -120,6 +120,22 @@ class IdLoomApi
         }
 
         return ['success' => true, 'data' => $data];
+    }
+
+    public function getAllTransactions(array $options = []): array
+    {
+        $transactionAvailable = true;
+
+        $retour = $this->request('GET', '/transactions', $options);
+
+        if ($retour['success']) {
+            $transactions = $retour['data'];
+            \sleep(1);
+        } else {
+            return $retour;
+        }
+
+        return ['success' => true, 'data' => $transactions];
     }
 
     public function getAllCreditNotes(array $options = []): array
