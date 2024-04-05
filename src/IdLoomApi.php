@@ -122,6 +122,22 @@ class IdLoomApi
         return ['success' => true, 'data' => $data];
     }
 
+    public function getAllTransactions(array $options = []): array
+    {
+        $transactionAvailable = true;
+
+        $retour = $this->request('GET', '/transactions', $options);
+
+        if ($retour['success']) {
+            $transactions = $retour['data'];
+            \sleep(1);
+        } else {
+            return $retour;
+        }
+
+        return ['success' => true, 'data' => $transactions];
+    }
+
     public function getAllCreditNotes(array $options = []): array
     {
         $creditNotesAvailable = true;
