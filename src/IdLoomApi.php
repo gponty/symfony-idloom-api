@@ -33,9 +33,9 @@ class IdLoomApi
     {
         $retour = [];
         try {
-            $response = $this->client->request($method, $this->idLoomUrl . $endpoint, [
+            $response = $this->client->request($method, $this->idLoomUrl.$endpoint, [
                 'headers' => [
-                    'Authorization' => 'Bearer ' . $this->apiKey,
+                    'Authorization' => 'Bearer '.$this->apiKey,
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ],
